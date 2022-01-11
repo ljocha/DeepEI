@@ -23,10 +23,18 @@ RUN apt install -y default-jdk-headless
 
 RUN apt install  -y r-base
 
-RUN pip3 install rpy2
 
-RUN Rscript -e 'install.packages("rcdklibs")'
-RUN Rscript -e 'install.packages("rJava")'
+#RUN Rscript -e 'install.packages("rcdklibs")'
+#RUN Rscript -e 'install.packages("rJava")'
 RUN Rscript -e 'install.packages("rcdk")'
 
+RUN pip3 install rpy2
 RUN pip3 install matchms
+
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+
+
+
+RUN apt install -y strace
+
+RUN R CMD javareconf

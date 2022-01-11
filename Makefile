@@ -11,4 +11,4 @@ push:
 
 
 run:
-	docker run -u ${UID} -ti -v $$PWD:/work -w /work -e PYTHONPATH=/work ${TAG} bash
+	docker run -u ${UID} -ti -v $$PWD:/work -w /work -e PYTHONPATH=/work -e HOME=/work ${TAG} bash

@@ -12,7 +12,6 @@ Created on Tue Jun 25 08:24:41 2019
 @author: hcji
 """
 
-import sqlite3
 import json
 import numpy as np
 from scipy.sparse import csr_matrix, save_npz
@@ -23,25 +22,17 @@ from rdkit.Chem.rdMolDescriptors import CalcExactMolWt
 from pycdk.pycdk import MolFromSmiles, parser_formula, MolToFormula, getMolecularDescriptor
 from DeepEI.utils import ms2vec, fp2vec, get_cdk_fingerprints, get_cdk_descriptors
 
-spec_path ='NIST2017/NIST_Spec.db'
-mol_path ='NIST2017/NIST_Mol.db'
+from matchms.importing import load_from_msp
+import sys
 
-spec_db = sqlite3.connect(spec_path)
-spec_cur = spec_db.cursor()
-mol_db = sqlite3.connect(mol_path)
-mol_cur = mol_db.cursor()
-
-all_mol = mol_cur.execute("select * from catalog")
-all_mol = mol_cur.fetchall()
+all_mol = list(load_from_msp(sys.argv[1]))
 
 def read_mol(i):
-    name = all_mol[i][0]
-    smiles = all_mol[i][1]
-    spec = spec_cur.execute("select * from catalog where name='%s'" % name)
-    spec = spec_cur.fetchall()
-    retention = spec[0][1]
-    peakindex = json.loads(spec[0][2])
-    peakintensity = json.loads(spec[0][3])
+    name = all_mol[i].get('name')
+    smiles = all_mol[i].get('smiles')
+    retention = ''
+    peakindex = all_mol[i].peaks.mz
+    peakintensity = all_mol[i].peaks.intensities
     RI = {}
     RI['SemiStdNP'] = np.nan
     RI['StdNP'] = np.nan
@@ -68,11 +59,13 @@ def collect():
     CDK_des = []
     MolWt = []
     # for i in tqdm(range(20)):
-    for i in tqdm(range(len(all_mol))):
+#    for i in tqdm(range(len(all_mol))):
+    for i in range(len(all_mol)):
         try:
             m = read_mol(i)
         except:
             continue
+        print(i,'read_mol ok')
         '''
         if  'TMS derivative' in m['name']:
             derive = 1
@@ -91,13 +84,17 @@ def collect():
                 if e not in ['C', 'H', 'O', 'N', 'S', 'P', 'Si', 'F', 'Cl', 'Br', 'I']:
                     raise ValueError ('contain uncommon element')
             morgan_fp = np.array(AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=4096))
+            print('try fingerprints')
             cdk_fp = get_cdk_fingerprints(smiles)
             # cdk_fp = fp2vec(cdk_fp)
+            print('try descriptors')
             cdk_des = np.array(get_cdk_descriptors(smiles))
             # cdk_des = getMolecularDescriptor(MolFromSmiles(smiles)).values()
             # cdk_des  = np.array(list(itertools.chain(*cdk_des)))
             ri = list(m['RI'].values())
+            print('call ms2vec')
             peak_vec = ms2vec(m['peakindex'], m['peakintensity'])
+            print('OK')
         except:
             continue
         
