@@ -33,8 +33,6 @@ RUN pip3 install matchms
 
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 
-
-
-RUN apt install -y strace
-
-RUN R CMD javareconf
+RUN bash -c 'echo $JAVA_HOME/lib/server >/etc/ld.so.conf.d/java-for-R.conf'
+RUN bash -c 'echo $JAVA_HOME/lib >>/etc/ld.so.conf.d/java-for-R.conf'
+RUN ldconfig
